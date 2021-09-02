@@ -5,6 +5,11 @@ const userController = {
     //Gets all Users
     getAllUsers(req, res) {
         User.find({})
+        .populate({
+            path: 'thought',
+            select: '-__v'
+        })
+        .select('-__v')
         .then(dbUserData => res.json(dbUserData))
         .catch(err => {
             console.log(err);
@@ -43,11 +48,36 @@ const userController = {
         })
         .catch(err => res.status(400).json(err));
     },
+    addFriend({ params, body }, res) {
+        User.findOneAndUpdate(
+            { _id: params.userId },
+            { $push: { friends: body } },
+            { new: true, runValidators: true }
+        )
+        .then(dbUserData => {
+            if(!dbUserData) {
+                res.status(404).json({ message: 'No Thought found with this Id!'});
+                return;
+            }
+            res.json(dbUserData);
+        })
+        .catch(err => res.json(err));
+
+    },
     //Deletes A User
     deleteUser({ params }, res){
         User.findOneAndDelete({ _ide: params.id })
         .then(dbUserData => res.json(dbUserData))
         .catch(err => res.status(400).json(err));
+    },
+    removeFriend({ params }, res) {
+        User.findOneAndUpdate(
+            { _id: params.userId },
+            { $pull: { friends: { friendId: params.friendId } } },
+            { new: true }
+        )
+        .then(dbUserData => res.json(dbUserData))
+        .catch(err => res.json(err));
     }
 };
 
